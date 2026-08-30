@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Parking · Live Booking</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  .my-booking-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 1200px;
+    margin: 16px auto 0;
+    padding: 10px 18px;
+    background: var(--asphalt-raised);
+    border: 1px solid var(--lane-yellow);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-main);
+  }
+  .my-booking-banner.hidden { display: none; }
+  .banner-btn {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 6px;
+    background: var(--danger);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .banner-btn:hover { filter: brightness(1.1); }
+  .admin-nav-link {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-decoration: none;
+  }
+  .admin-nav-link:hover { color: var(--text-main); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <h1>Smart Parking</h1>
+  </div>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="stats" id="stats">Loading…</div>
+    <a href="admin.html" class="admin-nav-link">Admin &rarr;</a>
+  </div>
+</header>
+
+<div id="my-booking-banner" class="my-booking-banner hidden"></div>
+
+<main>
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Slots</h2>
+      <div class="legend">
+        <span><i class="dot free"></i>Free</span>
+        <span><i class="dot pending"></i>Reserved</span>
+        <span><i class="dot checked_in"></i>Occupied</span>
+        <span><i class="dot warning"></i>Warning</span>
+        <span><i class="dot overstay"></i>Overstay</span>
+      </div>
+    </div>
+    <div id="slot-grid" class="slot-grid"></div>
+  </section>
+
+  <aside class="panel activity-panel">
+    <h2>Your Activity</h2>
+    <ul id="event-list" class="event-list"></ul>
+  </aside>
+</main>
+
+<div id="booking-modal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="cancel-modal">&times;</button>
+    <h2>Book Slot <span id="modal-slot-num"></span></h2>
+
+    <label for="car-number-input">Car number</label>
+    <input id="car-number-input" placeholder="e.g. AP09AB1234" autocomplete="off" />
+
+    <label>Duration</label>
+    <div class="duration-options" id="duration-options">
+      <button data-min="15">15m</button>
+      <button data-min="30">30m</button>
+      <button data-min="60" class="active">1h</button>
+      <button data-min="120">2h</button>
+    </div>
+
+    <p class="modal-note">
+      Arrive within 5 min or you'll get a warning — 10 min late and the
+      booking auto-cancels. When your booked time ends, leave promptly:
+      you'll see a warning right away, and overstay charges start once
+      you're 15 min past your end time.
+    </p>
+
+    <button id="confirm-booking" class="primary-btn">Confirm Booking</button>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

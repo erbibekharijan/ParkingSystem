@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Parking · Admin</title>
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="admin.css" />
+<style>
+  #admin-gate {
+    position: fixed; inset: 0; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--asphalt, #14161a);
+  }
+  #admin-gate.hidden { display: none; }
+  .admin-gate-card {
+    width: 100%; max-width: 340px; padding: 28px 26px;
+    background: var(--asphalt-raised, #1e2127);
+    border: 1px solid var(--lane-yellow, #e8c547);
+    border-radius: 12px; text-align: center;
+  }
+  .admin-gate-card h2 { margin: 0 0 6px; color: var(--text-main, #f2f2f2); }
+  .admin-gate-card p { margin: 0 0 18px; font-size: 0.82rem; color: var(--text-dim, #9aa0a6); }
+  .admin-gate-card input {
+    width: 100%; box-sizing: border-box; padding: 9px 12px; margin-bottom: 10px;
+    border-radius: 6px; border: 1px solid #3a3d44; background: #101216; color: #f2f2f2;
+  }
+  .admin-gate-card button {
+    width: 100%; padding: 9px 12px; border: none; border-radius: 6px;
+    background: var(--lane-yellow, #e8c547); color: #14161a; font-weight: 700; cursor: pointer;
+  }
+  .admin-gate-error { color: #ff6b6b; font-size: 0.78rem; min-height: 16px; margin-top: 10px; }
+  #admin-app.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="admin-gate">
+  <div class="admin-gate-card">
+    <h2>Admin sign-in</h2>
+    <p>Head in-charge access only.</p>
+    <input id="admin-email" type="email" placeholder="Email" autocomplete="username" />
+    <input id="admin-password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button id="admin-login-btn">Unlock</button>
+    <div class="admin-gate-error" id="admin-gate-error"></div>
+  </div>
+</div>
+
+<div id="admin-app" class="hidden">
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    <h1>Smart Parking — Admin</h1>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <div class="stats" id="admin-stats">Loading…</div>
+    <button id="admin-logout-btn" class="admin-link" style="background:none;border:none;cursor:pointer;">Sign out</button>
+  </div>
+</header>
+
+<main class="admin-main">
+  <div class="admin-toolbar">
+    <a href="index.html" class="admin-link">&larr; Back to booking view</a>
+    <button id="reset-all-btn" class="admin-btn danger">Reset ALL slots (demo)</button>
+  </div>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Slot</th>
+        <th>Status</th>
+        <th>Car</th>
+        <th>Booked at</th>
+        <th>Expected end</th>
+        <th>Checked in</th>
+        <th>Extra charge</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="admin-tbody"></tbody>
+  </table>
+</main>
+
+</div><!-- #admin-app -->
+
+<script type="module">
+  // Gates the whole admin page behind a real Supabase Auth login. This does
+  // NOT replace admin.js — it just decides whether #admin-app is visible,
+  // and only imports/starts admin.js after a session is confirmed.
+  import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+  const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const gate = document.getElementById("admin-gate");
+  const appEl = document.getElementById("admin-app");
+  const emailInput = document.getElementById("admin-email");
+  const passInput = document.getElementById("admin-password");
+  const loginBtn = document.getElementById("admin-login-btn");
+  const errEl = document.getElementById("admin-gate-error");
+
+  let adminScriptStarted = false;
+
+  function showApp() {
+    gate.classList.add("hidden");
+    appEl.classList.remove("hidden");
+    if (!adminScriptStarted) {
+      adminScriptStarted = true;
+      const s = document.createElement("script");
+      s.type = "module";
+      s.src = "admin.js";
+      document.body.appendChild(s);
+    }
+  }
+
+  function showGate(message) {
+    appEl.classList.add("hidden");
+    gate.classList.remove("hidden");
+    errEl.textContent = message || "";
+  }
+
+  loginBtn.addEventListener("click", async () => {
+    errEl.textContent = "";
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Checking…";
+    const { error } = await authClient.auth.signInWithPassword({
+      email: emailInput.value.trim(),
+      password: passInput.value,
+    });
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Unlock";
+    if (error) {
+      errEl.textContent = "Wrong email or password.";
+      return;
+    }
+    showApp();
+  });
+
+  passInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") loginBtn.click();
+  });
+
+  document.getElementById("admin-logout-btn")?.addEventListener("click", async () => {
+    await authClient.auth.signOut();
+    showGate();
+  });
+
+  // Supabase persists sessions in localStorage by default, so a page
+  // refresh stays signed in until you explicitly sign out.
+  const { data: { session } } = await authClient.auth.getSession();
+  if (session) {
+    showApp();
+  } else {
+    showGate();
+  }
+</script>
+</body>
+</html>
